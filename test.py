@@ -11,7 +11,7 @@ Fubon scraper (final)
 - overlaps:
     - 上市∩1470∩1650
     - 上櫃∩1470∩1650
-    python fubon_scraper.py --out . --date 2025-08-25
+    python test.py --out . --date 2025-08-25
 """
 
 import argparse
