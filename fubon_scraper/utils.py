@@ -17,7 +17,8 @@ except Exception:
 import config
 
 # 共用正則：4 碼股票代號
-RE_CODE = re.compile(r"(?<!\d)(\d{4,6})(?!\d)")
+RE_CODE = re.compile(r"(?<![0-9A-Za-zＡ-Ｚａ-ｚ])(\d{4,6}[A-Za-zＡ-Ｚａ-ｚ]?)(?![0-9A-Za-zＡ-Ｚａ-ｚ])")
+
 
 
 def tw_today() -> dt.date:

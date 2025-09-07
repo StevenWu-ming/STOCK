@@ -9,10 +9,10 @@ from bs4 import BeautifulSoup
 from .utils import RE_CODE
 
 # 正則表達式
-RE_ONCLICK = re.compile(r"GenLink2stk\('AS(\d{4,6})'")
-RE_CODEJS  = re.compile(r"GenLink2stk\('[^']*?(\d{4,6})'\s*,\s*'([^']+)'\)", re.IGNORECASE)
+RE_ONCLICK   = re.compile(r"GenLink2stk\('\D*?(\d{4,6}[A-Za-zＡ-Ｚａ-ｚ]?)'")
+RE_CODEJS    = re.compile(r"GenLink2stk\('[^']*?(\d{4,6}[A-Za-zＡ-Ｚａ-ｚ]?)'\s*,\s*'([^']+)'\)", re.IGNORECASE)
 RE_CODE_NAME = re.compile(
-    r"(?<!\d)(?P<code>\d{4,6})(?!\d)\s*[，,\s]*\s*(?P<name>[\u4e00-\u9fffA-Za-z0-9\-\._]+)"
+    r"(?<![0-9A-Za-zＡ-Ｚａ-ｚ])(?P<code>\d{4,6}[A-Za-zＡ-Ｚａ-ｚ]?)(?![0-9A-Za-zＡ-Ｚａ-ｚ])\s*[，,\s]*\s*(?P<name>[\u4e00-\u9fffA-Za-z0-9\-\._]+)"
 )
 
 
@@ -107,9 +107,15 @@ def parse_codes_generic(html: str) -> pd.DataFrame:
 
 
 def extract_zgb_side(html: str, side: str = "買超") -> pd.DataFrame:
-    """只在指定 side 區塊（買超/賣超）內抽出代號/名稱"""
+    """
+    只在指定 side（買超/賣超）區塊內抽出代號/名稱。
+    依序「都」嘗試：JS 連結 / <a> 文字 / 表格 / 純文字，全合併後去重。
+    支援 4–6 碼 + 可選英文字尾，並將全形字母正規化為半形。
+    """
+    import unicodedata
     compact = re.sub(r"\s+", " ", html)
 
+    # 切出 side 片段
     start = compact.find(f">{side}<")
     if start == -1:
         m = re.search(rf"> *{re.escape(side)} *<", compact)
@@ -121,25 +127,59 @@ def extract_zgb_side(html: str, side: str = "買超") -> pd.DataFrame:
     other = "賣超" if side == "買超" else "買超"
     end = compact.find(f">{other}<", start + 1)
     segment = compact[start:end] if end != -1 else compact[start:]
+    seg_soup = BeautifulSoup(segment, "lxml")
 
-    # 先抓 GenLink2stk
-    items = re.findall(r"GenLink2stk\('AS(\d{4,6})','([^']+)'\)", segment)
-    rows = [(code, re.sub(r"\s+", "", name)) for code, name in items]
+    rows: list[tuple[str, str]] = []
 
-    # 保底：從 <a> 文字抓
-    if not rows:
-        seg_soup = BeautifulSoup(segment, "lxml")
-        for a in seg_soup.find_all("a"):
-            text = a.get_text(strip=True)
-            m = re.match(r"^(\d{4,6})(.+)$", text)
+    # (1) 任意 JS 連結：('任意前綴+4~6碼(+字尾)','名稱')
+    rows += [(code, re.sub(r"\s+", "", name))
+             for _, code, name in re.findall(r"\('([^']*?(\d{4,6}[A-Za-zＡ-Ｚａ-ｚ]?))'\s*,\s*'([^']+)'\)", segment)]
+
+    # (2) <a> 文字： ^(代號)(名稱)
+    for a in seg_soup.find_all("a"):
+        text = a.get_text(" ", strip=True).replace("\xa0", " ")
+        m = re.match(r"^(\d{4,6}[A-Za-zＡ-Ｚａ-ｚ]?)\s*(.+)$", text)
+        if m:
+            rows.append((m.group(1), re.sub(r"\s+", "", m.group(2))))
+
+    # (3) 表格掃描：很多 ETF/債券不是連結
+    from io import StringIO
+    import pandas as _pd
+    for t in seg_soup.find_all("table"):
+        try:
+            df = _pd.read_html(StringIO(str(t)))[0]
+        except Exception:
+            continue
+        for _, r in df.iterrows():
+            text = " ".join(str(v) for v in r.values)
+            m = RE_CODE_NAME.search(text)
             if m:
-                code, name = m.group(1), re.sub(r"\s+", "", m.group(2))
-                rows.append((code, name))
+                rows.append((m.group("code"), re.sub(r"\s+", "", m.group("name"))))
+
+    # (4) 純文字保底：把整段文字掃一次
+    plain = seg_soup.get_text(" ", strip=True)
+    for m in RE_CODE_NAME.finditer(plain):
+        rows.append((m.group("code"), re.sub(r"\s+", "", m.group("name"))))
 
     if not rows:
         raise ValueError(f"{side}表沒有解析到任何股票")
 
-    df = pd.DataFrame(rows, columns=["代號", "名稱"]).drop_duplicates().reset_index(drop=True)
-    df = df[df["代號"].astype(str).str.fullmatch(r"\d{4,6}")]
-    df["名稱"] = df["名稱"].astype(str).str.replace(r"\*", "", regex=True).str.strip()
-    return df.reset_index(drop=True)
+    # 清理 / 去重：標準化全形 → 半形，允許 4–6 碼 + 可選英文字尾
+    seen = set()
+    clean = []
+    for code, name in rows:
+        code = unicodedata.normalize("NFKC", str(code))  # 全形→半形
+        code = re.sub(r"\s+", "", code).upper()
+        if not re.fullmatch(r"\d{4,6}[A-Za-z]?", code):
+            continue
+        if code in seen:
+            continue
+        seen.add(code)
+        nm = str(name).replace("*", "").strip()
+        clean.append((code, nm))
+
+    import pandas as pd
+    df = pd.DataFrame(clean, columns=["代號", "名稱"]).dropna().reset_index(drop=True)
+    return df
+
+
