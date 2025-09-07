@@ -6,11 +6,16 @@ stock/bin/
 stock/lib/
 stock/pyvenv.cfg
 
-# 或者乾脆忽略整個 stock 資料夾
-# 然後再手動允許你的程式檔
-# (假設 fubon_scraper.py 在 stock/ 下)
-# !stock/fubon_scraper.py
+# Secrets
+.env
+*.env.*
+secrets/
+*.secret.json
+config.py
+config_local.py
 
-# Python 編譯暫存
+# Python
 __pycache__/
 *.pyc
+/dist
+/build
