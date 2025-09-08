@@ -11,8 +11,6 @@ stock/pyvenv.cfg
 *.env.*
 secrets/
 *.secret.json
-config.py
-config_local.py
 
 # Python
 __pycache__/
