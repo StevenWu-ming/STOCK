@@ -1,9 +1,19 @@
 # config.py
+import os, sys
 from pathlib import Path
 from dotenv import load_dotenv
-import os
 
-load_dotenv()
+def APP_DIR() -> Path:
+    # 打包後用 exe 所在資料夾；開發時用檔案所在資料夾
+    return Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+
+BASE_DIR = APP_DIR()
+load_dotenv(BASE_DIR / ".env")     # ✅ 固定從 exe 同層載入 .env
+
+# 建議輸出也跟著放在 exe 同層
+OUT_DIR = BASE_DIR / "out"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
 
 # 清理策略：擇一或並用
 OUT_CLEAN_BEFORE_RUN = True  # True：每次跑前清空 out 裡的 fubon_*.json
