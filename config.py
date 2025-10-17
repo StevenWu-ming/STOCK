@@ -37,6 +37,12 @@ DD_URLS = [
     ("3日_上櫃",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_dd_1_3.djhtm"),
     ("5日_上市",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_dd_0_5.djhtm"),
     ("5日_上櫃",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_dd_1_5.djhtm"),
+    ("單日_上市S", "https://fubon-ebrokerdj.fbs.com.tw/Z/ZG/ZG_DE.djhtm"),
+    ("單日_上櫃S", "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_DE_1_1.djhtm"),
+    ("3日_上市S",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_DE_0_3.djhtm"),
+    ("3日_上櫃S",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_DE_1_3.djhtm"),
+    ("5日_上市S",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_DE_0_5.djhtm"),
+    ("5日_上櫃S",  "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zg_DE_1_5.djhtm"),
 ]
 
 ZGB_BASE = "https://fubon-ebrokerdj.fbs.com.tw/z/zg/zgb/zgb0.djhtm"
@@ -50,6 +56,12 @@ ZGB_CODES = [
     ("ZGB_1650_單日", {"a": "1650", "b": "1650", "c": "B", "d": "1"}),
     ("ZGB_1650_3日",  {"a": "1650", "b": "1650", "c": "B", "d": "3"}),
     ("ZGB_1650_5日",  {"a": "1650", "b": "1650", "c": "B", "d": "5"}),
+    ("ZGB_1470_單日S", {"a": "1470", "b": "1470", "c": "S", "d": "1"}),
+    ("ZGB_1470_3日S",  {"a": "1470", "b": "1470", "c": "S", "d": "3"}),
+    ("ZGB_1470_5日S",  {"a": "1470", "b": "1470", "c": "S", "d": "5"}),
+    ("ZGB_1650_單日S", {"a": "1650", "b": "1650", "c": "S", "d": "1"}),
+    ("ZGB_1650_3日S",  {"a": "1650", "b": "1650", "c": "S", "d": "3"}),
+    ("ZGB_1650_5日S",  {"a": "1650", "b": "1650", "c": "S", "d": "5"}),
 ]
 
 # 額外 ZGB 目標（已加入：凱基台北 9200 一日買超）
@@ -78,6 +90,12 @@ DISCORD_WEBHOOKS = {
     "5日_上櫃": os.getenv("DISCORD_WEBHOOK_5日_上櫃", ""),
     "KGI_台北_單日": os.getenv("DISCORD_WEBHOOK_KGI_台北_單日", ""),
     "KGI_松山_單日": os.getenv("DISCORD_WEBHOOK_KGI_松山_單日", ""),
+    "單日_上市S": os.getenv("DISCORD_WEBHOOK_單日_上市S", ""),
+    "單日_上櫃S": os.getenv("DISCORD_WEBHOOK_單日_上櫃S", ""),
+    "3日_上市S": os.getenv("DISCORD_WEBHOOK_3日_上市S", ""),
+    "3日_上櫃S": os.getenv("DISCORD_WEBHOOK_3日_上櫃S", ""),
+    "5日_上市S": os.getenv("DISCORD_WEBHOOK_5日_上市S", ""),
+    "5日_上櫃S": os.getenv("DISCORD_WEBHOOK_5日_上櫃S", ""),
     }
 
 # ── 交集規則（已包含預設 6 組 + KGI 台北示範）────────────────
@@ -89,6 +107,12 @@ INTERSECTION_RULES = [
     {"name": "3日_上櫃×1470×1650", "groups": ["3日_上櫃", "ZGB_1470_3日", "ZGB_1650_3日"]},
     {"name": "5日_上市×1470×1650", "groups": ["5日_上市", "ZGB_1470_5日", "ZGB_1650_5日"]},
     {"name": "5日_上櫃×1470×1650", "groups": ["5日_上櫃", "ZGB_1470_5日", "ZGB_1650_5日"]},
+    {"name": "單日_上市S×1470S×1650S", "groups": ["單日_上市S", "ZGB_1470_單日S", "ZGB_1650_單日S"]},
+    {"name": "單日_上櫃S×1470S×1650S", "groups": ["單日_上櫃S", "ZGB_1470_單日S", "ZGB_1650_單日S"]},
+    {"name": "3日_上市S×1470S×1650S", "groups": ["3日_上市S", "ZGB_1470_3日S", "ZGB_1650_3日S"]},
+    {"name": "3日_上櫃S×1470S×1650S", "groups": ["3日_上櫃S", "ZGB_1470_3日S", "ZGB_1650_3日S"]},
+    {"name": "5日_上市S×1470S×1650S", "groups": ["5日_上市S", "ZGB_1470_5日S", "ZGB_1650_5日S"]},
+    {"name": "5日_上櫃S×1470S×1650S", "groups": ["5日_上櫃S", "ZGB_1470_5日S", "ZGB_1650_5日S"]},
 
     # 進階示範：把「凱基台北(9200) 一日買超」也納入交集
     {"name": "KGI_台北_單日", "groups": ["ZGB_KGI_台北_單日"]},
