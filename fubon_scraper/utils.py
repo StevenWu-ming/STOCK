@@ -88,18 +88,27 @@ def fetch_html(url: str, session: requests.Session) -> str:
 def build_zgb_url(params: Dict[str, str], d: dt.date) -> str:
     """
     Fubon ZGB：若沒有 d（自設區間）才帶 e/f；有 d=1/3/5 則不帶 e/f。
-    params: a, b, c(B/S), d(1/3/5) / 可不含 d
+    注意：頁面上的 `c` 代表張數/金額 (sKind)，**不是買/賣超**。
+    這裡一律以 `c=B`（張數）為預設，忽略外部傳入的 c，避免列表和你在頁面預設看到的不同。
+    之後若要切換為金額，可另外新增參數 key（例如 metric="amt"）再由此轉換。
     """
     y, m, da = d.year, d.month, d.day
     p = params.copy()
+    # 強制使用張數榜 (B)，避免 config.c 造成與頁面不一致
+    p.pop("c", None)
+    p["c"] = "B"
     if not p.get("d"):
         p.update({"e": f"{y}-{m}-{da}", "f": f"{y}-{m}-{da}"})
     qs = "&".join([f"{k}={v}" for k, v in p.items()])
     return f"{config.ZGB_BASE}?{qs}"
 
 
+
 def zgb_side_from_url(url: str) -> str:
-    """依 URL 查詢參數 c=B/S 判定 '買超' 或 '賣超'（預設買超）"""
+    """[DEPRECATED for side detection]
+    富邦 ZGB 頁的 query 參數 c 代表張數/金額(sKind)，非買/賣超；
+    僅保留做為回溯相容，預設回傳「買超」。未來請以 group 名稱是否以 S 結尾判定。
+    """
     try:
         qs = parse_qs(urlparse(url).query)
         c = (qs.get("c", ["B"])[0] or "B").upper()

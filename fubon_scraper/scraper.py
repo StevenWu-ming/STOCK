@@ -78,7 +78,7 @@ def _scrape_group(name: str, url: str, session) -> pd.DataFrame:
     """抓取單一 group"""
     html = fetch_html(url, session)
     if "/z/zg/zgb/zgb0.djhtm" in url.lower():
-        side = zgb_side_from_url(url)
+        side = "賣超" if name.endswith("S") else "買超"
         df = extract_zgb_side(html, side=side)
     else:
         df = parse_codes_generic(html)
